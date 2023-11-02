@@ -4,6 +4,7 @@ Sends Invoices to Document AI API
 Saves Extracted Info to BigQuery
 Sends addresses to Geocoding PubSub Topic.
 """
+
 import json
 import os
 import re
@@ -53,9 +54,13 @@ storage_client = storage.Client()
 bq_client = bigquery.Client()
 pub_client = pubsub_v1.PublisherClient()
 
-ACCEPTED_MIME_TYPES = set(
-    ["application/pdf", "image/jpeg", "image/png", "image/tiff", "image/gif"]
-)
+ACCEPTED_MIME_TYPES = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/tiff",
+    "image/gif",
+}
 
 
 def write_to_bq(dataset_name, table_name, entities_extracted_dict):
@@ -64,9 +69,7 @@ def write_to_bq(dataset_name, table_name, entities_extracted_dict):
     """
     dataset_ref = bq_client.dataset(dataset_name)
     table_ref = dataset_ref.table(table_name)
-    row_to_insert = []
-    row_to_insert.append(entities_extracted_dict)
-
+    row_to_insert = [entities_extracted_dict]
     json_data = json.dumps(row_to_insert, sort_keys=False)
     # Convert to a JSON Object
     json_object = json.loads(json_data)
@@ -111,12 +114,12 @@ def extract_document_entities(document: documentai.Document) -> dict:
         if existing_entity:
             # Change Entity Type to a List
             if not isinstance(existing_entity, list):
-                existing_entity = list([existing_entity])
+                existing_entity = [existing_entity]
 
             existing_entity.append(new_entity_value)
             document_entities[entity_key] = existing_entity
         else:
-            document_entities.update({entity_key: new_entity_value})
+            document_entities[entity_key] = new_entity_value
 
     for entity in document.entities:
         # Fields detected. For a full list of fields for each processor see
@@ -168,10 +171,7 @@ def _batch_process_documents(
         document_output_config=output_config,
     )
 
-    # Future for long-running operations returned from Google Cloud APIs.
-    operation = docai_client.batch_process_documents(request)
-
-    return operation
+    return docai_client.batch_process_documents(request)
 
 
 def get_document_protos_from_gcs(
@@ -190,7 +190,7 @@ def get_document_protos_from_gcs(
     for blob in blob_list:
         # Document AI should only output JSON files to GCS
         if ".json" in blob.name:
-            print("Fetching from " + blob.name)
+            print(f"Fetching from {blob.name}")
             document_proto = documentai.types.Document.from_json(
                 blob.download_as_bytes()
             )
@@ -260,20 +260,20 @@ def process_invoice(event, context):
         return
 
     if mime_type not in ACCEPTED_MIME_TYPES:
-        print("Cannot parse the file type: " + mime_type)
+        print(f"Cannot parse the file type: {mime_type}")
         return
 
-    print("Mime Type: " + mime_type)
+    print(f"Mime Type: {mime_type}")
 
     gcs_input_uri = f"gs://{input_bucket}/{input_filename}"
 
-    print("Input File: " + gcs_input_uri)
+    print(f"Input File: {gcs_input_uri}")
 
     operation = _batch_process_documents(
         PROJECT_ID, LOCATION, PROCESSOR_ID, gcs_input_uri, destination_uri
     )
 
-    print("Document Processing Operation: " + operation.operation.name)
+    print(f"Document Processing Operation: {operation.operation.name}")
 
     # Wait for the operation to finish
     operation.result(timeout=timeout)

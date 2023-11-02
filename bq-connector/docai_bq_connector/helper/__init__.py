@@ -27,9 +27,7 @@ def find(f, seq):
 
 
 def get_bool_value(raw_value) -> bool:
-    if raw_value in (1, "True" "CHECKED"):
-        return True
-    return False
+    return raw_value in (1, "True" "CHECKED")
 
 
 def clean_number(raw_value):

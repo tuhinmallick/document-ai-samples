@@ -61,15 +61,14 @@ print("Document processing complete.")
 extracted_languages = []
 
 for page in document.pages:
-    for language in page.detected_languages:
-        extracted_languages.append(
-            {
-                "page_number": page.page_number,
-                "language_code": language.language_code,
-                "confidence": f"{language.confidence:.0%}",
-            }
-        )
-
+    extracted_languages.extend(
+        {
+            "page_number": page.page_number,
+            "language_code": language.language_code,
+            "confidence": f"{language.confidence:.0%}",
+        }
+        for language in page.detected_languages
+    )
 # Create a Pandas Dataframe to print the values in tabular format.
 df = pd.DataFrame(extracted_languages)
 

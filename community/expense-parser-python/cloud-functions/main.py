@@ -100,8 +100,7 @@ def write_to_bq(dataset_name, table_name, extracted_list, file_name):
 def get_gcs_file(file_name, bucket_name):
     bucket = storage_client.get_bucket(bucket_name)
     gcs_file = bucket.get_blob(file_name)
-    file_blob = gcs_file.download_as_bytes()
-    return file_blob
+    return gcs_file.download_as_bytes()
 
 
 def extract_entities(file, content_type):
@@ -134,15 +133,13 @@ def format_entities(extracted_doc):
                 "mention_text": entity.mention_text,
                 "confidence": entity.confidence,
             }
-            result_ents.append(ents)
         else:
             ents = {
                 "type_": entity_type,
                 "mention_text": entity.mention_text,
                 "confidence": entity.confidence,
             }
-            result_ents.append(ents)
-
+        result_ents.append(ents)
     print("Formatted entities to a list.")
     return result_ents
 

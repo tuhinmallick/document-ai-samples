@@ -73,14 +73,13 @@ class DocumentaiUtils:
                     entities[key] = []
                 entities[key].append(value)
 
-            for key in entities:
-                values = entities[key]
+            for key, values in entities.items():
                 N = len(values)
 
                 for i in range(N):
                     if i == 0:
                         fields[key] = values[i]
                     else:
-                        fields[key + "_" + str(i + 1)] = values[i]
+                        fields[f"{key}_{str(i + 1)}"] = values[i]
 
         return fields

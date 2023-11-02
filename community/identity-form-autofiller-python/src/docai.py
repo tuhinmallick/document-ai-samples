@@ -235,17 +235,14 @@ def id_data_from_document(document: Document) -> Mapping[str, Mapping[int, Mappi
 
 def text_from_entity(doc: Document, entity: Document.Entity) -> str:
     """Return a single string of line-break-separated text segments."""
-    text_segments = entity.text_anchor.text_segments
-
-    if not text_segments:
+    if text_segments := entity.text_anchor.text_segments:
+        return "\n".join(
+            doc.text[ts.start_index : ts.end_index] for ts in text_segments
+        )
+    else:
         # Some processors can return entity text not present in the document text
         # Example: ID_PROOFING_PROCESSOR
         return entity.mention_text
-
-    # For demo purposes, return line breaks so they can be made visible in the UI
-    text = "\n".join(doc.text[ts.start_index : ts.end_index] for ts in text_segments)
-
-    return text
 
 
 def crop_entity(doc: Document, entity: Document.Entity) -> PilImage:
@@ -258,9 +255,7 @@ def crop_entity(doc: Document, entity: Document.Entity) -> PilImage:
     w, h = doc_image.size
     vertices = vertices_from_bounding_poly(page_ref.bounding_poly, w, h)
     (top, left), (bottom, right) = vertices[0], vertices[2]
-    cropped_image = doc_image.crop((top, left, bottom, right))
-
-    return cropped_image
+    return doc_image.crop((top, left, bottom, right))
 
 
 def vertices_from_bounding_poly(

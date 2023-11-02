@@ -118,9 +118,7 @@ class BqMetadataMapper:
 
     def get_value_for_metadata(self, metadata_name):
         mapping_info = self.mapping_info.get(metadata_name)
-        if mapping_info is not None:
-            return mapping_info.metadata_value
-        return None
+        return mapping_info.metadata_value if mapping_info is not None else None
 
     def set_default_value_for_metadata_if_not_set(
         self, metadata_name, new_default_value
@@ -133,7 +131,6 @@ class BqMetadataMapper:
     def map_metadata(self):
         response = []
         for cur_metadata_name, cur_mapping_info_config in self.mapping_info.items():
-            mapping_for_cur_metadata = {}
             (
                 bq_col_name,
                 bq_col_value,
@@ -141,8 +138,10 @@ class BqMetadataMapper:
             if not bq_col_name:
                 continue
 
-            mapping_for_cur_metadata["bq_column_name"] = bq_col_name
-            mapping_for_cur_metadata["bq_column_value"] = bq_col_value
+            mapping_for_cur_metadata = {
+                "bq_column_name": bq_col_name,
+                "bq_column_value": bq_col_value,
+            }
             response.append(mapping_for_cur_metadata)
 
         return response

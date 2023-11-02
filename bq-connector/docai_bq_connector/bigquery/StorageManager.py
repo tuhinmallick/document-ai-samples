@@ -72,12 +72,10 @@ class StorageManager:
         if len(cols_to_update) == 0:
             # Nothing to do
             return
-        idx = 0
-        for index, (cur_col, cur_val) in enumerate(cols_to_update.items()):
+        for idx, (cur_col, cur_val) in enumerate(cols_to_update.items()):
             dml_statement = f"{dml_statement} {cur_col} = @param_{idx},"
             cur_qp = bigquery.ScalarQueryParameter(f"param_{idx}", "STRING", cur_val)
             query_params.append(cur_qp)
-            idx += 1
         # Remove last comma
         dml_statement = (
             f"{dml_statement[:-1]} WHERE {record_id_name} = @param_record_id"

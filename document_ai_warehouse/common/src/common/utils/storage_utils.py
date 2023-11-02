@@ -18,8 +18,7 @@ def read_file(file_path: str, mode: str = "rb"):
 
 def file_exists(bucket_name: str, file_name: str):
     bucket = storage_client.bucket(bucket_name)
-    stats = storage.Blob(bucket=bucket, name=file_name).exists(storage_client)
-    return stats
+    return storage.Blob(bucket=bucket, name=file_name).exists(storage_client)
 
 
 def write_gcs_blob(

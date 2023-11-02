@@ -78,11 +78,7 @@ class DocumentWarehouseUtils:
             caller_user_id=caller_user_id
         )
 
-        # Make the request
-        response = client.fetch_acl(request=request)
-
-        # Handle the response
-        return response
+        return client.fetch_acl(request=request)
 
     def copy_document_acl_to_document(
         self, target_document_id: str, source_document_id: str, caller_user_id: str
@@ -106,7 +102,7 @@ class DocumentWarehouseUtils:
     def set_acl(
         self, document_id: str, policy: str, caller_user_id: str
     ) -> contentwarehouse_v1.SetAclResponse:
-        if len(document_id) == 0 or policy:
+        if not document_id or policy:
             return False, "document_id or policy is empty"
 
         # Create a client
@@ -124,11 +120,7 @@ class DocumentWarehouseUtils:
             caller_user_id=caller_user_id
         )
 
-        # Make the request
-        response = client.set_acl(request=request)
-
-        # Handle the response
-        return response
+        return client.set_acl(request=request)
 
     # Document methods
 
@@ -149,11 +141,7 @@ class DocumentWarehouseUtils:
             caller_user_id=caller_user_id
         )
 
-        # Make the request
-        response = client.search_documents(request=request)
-
-        # Handle the response
-        return response
+        return client.search_documents(request=request)
 
     def delete_document(self, document_id: str, caller_user_id: str) -> None:
         # Create a client
@@ -196,16 +184,12 @@ class DocumentWarehouseUtils:
             caller_user_id=caller_user_id
         )
 
-        # Make the request
-        response = client.get_document(request=request)
-
-        # Handle the response
-        return response
+        return client.get_document(request=request)
 
     def link_document_to_folder(
         self, document_id: str, folder_document_id: str, caller_user_id: str
     ):
-        if len(folder_document_id) == 0:
+        if not folder_document_id:
             return False, ""
 
         try:
@@ -229,12 +213,7 @@ class DocumentWarehouseUtils:
                 caller_user_id=caller_user_id
             )
 
-            # Make the request
-            response = client.create_document_link(request=request)
-
-            # Handle the response
-            return response
-
+            return client.create_document_link(request=request)
         except Exception as e:
             error_msg = str(e)[:100]
             return False, error_msg
@@ -253,12 +232,10 @@ class DocumentWarehouseUtils:
             "application/vnd.openxmlformats-officedocument.presentationml.presentation": document.raw_document_file_type.RAW_DOCUMENT_FILE_TYPE_PPTX,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": document.raw_document_file_type.RAW_DOCUMENT_FILE_TYPE_XLSX,
         }
-        if mime_type.lower() in mime_to_dw_mime_enum:
-            document.raw_document_file_type = mime_to_dw_mime_enum[mime_type.lower()]
-        else:
-            document.raw_document_file_type = (
-                document.raw_document_file_type.RAW_DOCUMENT_FILE_TYPE_UNSPECIFIED
-            )
+        document.raw_document_file_type = mime_to_dw_mime_enum.get(
+            mime_type.lower(),
+            document.raw_document_file_type.RAW_DOCUMENT_FILE_TYPE_UNSPECIFIED,
+        )
 
     @staticmethod
     def append_docai_entities_to_doc_properties(
@@ -317,7 +294,7 @@ class DocumentWarehouseUtils:
 
         # Add properties from metadata
 
-        if len(metadata_properties) > 0:
+        if metadata_properties:
             document.properties.extend(metadata_properties)
 
         if docai_document:
@@ -342,9 +319,7 @@ class DocumentWarehouseUtils:
             caller_user_id=caller_user_id
         )
 
-        response = client.create_document(request=request)
-
-        return response
+        return client.create_document(request=request)
 
     def create_document_schema(self, schema: str) -> contentwarehouse_v1.DocumentSchema:
         # schema_json = json.loads(text_schema)
@@ -360,12 +335,7 @@ class DocumentWarehouseUtils:
         # define schema
         request.document_schema = contentwarehouse_v1.DocumentSchema.from_json(schema)
 
-        # print(request)
-
-        # Make the request
-        response = client.create_document_schema(request=request)
-
-        return response
+        return client.create_document_schema(request=request)
 
     def get_document_schema(self, schema_id: str):
         client = self.get_document_schema_service_client()
@@ -376,11 +346,7 @@ class DocumentWarehouseUtils:
 
         request.name = f"{parent}/documentSchemas/{schema_id}"
 
-        # Make the request
-        response = client.get_document_schema(request=request)
-
-        # Handle the response
-        return response
+        return client.get_document_schema(request=request)
 
     def delete_document_schema(self, schema_id: str):
         client = self.get_document_schema_service_client()
@@ -410,11 +376,7 @@ class DocumentWarehouseUtils:
             schema_json
         )
 
-        # Make the request
-        response = client.update_document_schema(request=request)
-
-        # Handle the response
-        return response
+        return client.update_document_schema(request=request)
 
     def list_document_schemas(self):
         document_schema_client = self.get_document_schema_service_client()
@@ -427,11 +389,4 @@ class DocumentWarehouseUtils:
 
         # Make the request
         page_result = document_schema_client.list_document_schemas(request=request)
-        # Print response
-        responses = []
-        # print("Document Schemas:")
-        for response in page_result:
-            # print(response)
-            responses.append(response)
-
-        return responses
+        return list(page_result)

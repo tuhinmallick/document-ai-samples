@@ -183,7 +183,7 @@ class BqDocumentMapper:
         if self.include_raw_entities is True:
             row["raw_entities"] = json.dumps(self.to_raw_entities())
 
-        if append_parsed_fields is True:
+        if append_parsed_fields:
             if exclude_fields is not None and len(exclude_fields) > 0:
                 _dict = self.dictionary.copy()
                 for field_name in exclude_fields:
@@ -221,7 +221,7 @@ class BqDocumentMapper:
 
                     # If a nested field has an error, exclude the top level field
                     if "." in field_name:
-                        field_name = field_name[0 : field_name.split(".")[0].rfind("[")]
+                        field_name = field_name[:field_name.split(".")[0].rfind("[")]
 
                     error_val = self.dictionary.get(field_name)
                     error_records.append(
@@ -237,11 +237,8 @@ class BqDocumentMapper:
         return list(map(lambda x: x.key, error_records))
 
     def to_raw_entities(self):
-        result = []
         fields = self.fields
-        for field in fields:
-            result.append(field.to_dictionary())
-        return result
+        return [field.to_dictionary() for field in fields]
 
     def _map_document_to_bigquery_schema(
         self, fields: List[DocumentField], bq_schema: List[SchemaField]
@@ -342,9 +339,7 @@ class BqDocumentMapper:
                     return raw_value
                 if bq_datatype in ("DECIMAL", "FLOAT", "NUMERIC"):
                     return float(clean_number(raw_value))
-                if bq_datatype == "INTEGER":
-                    return int(clean_number(raw_value))
-                return raw_value
+                return int(clean_number(raw_value)) if bq_datatype == "INTEGER" else raw_value
             elif self.parsing_methodology in [PARSING_METHOD_NORMALIZED_VALUES]:
                 normalized_value = field.normalized_value
                 if normalized_value is None:

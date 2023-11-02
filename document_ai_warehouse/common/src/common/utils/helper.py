@@ -26,10 +26,7 @@ def split_uri_2_bucket_prefix(uri: str):
     if not match:
         # just bucket no prefix
         match = re.match(r"gs://([^/]+)", uri)
-        if match:
-            return match.group(1), ""
-        else:
-            return "", ""
+        return (match.group(1), "") if match else ("", "")
     bucket = match.group(1)
     prefix = match.group(2)
     return bucket, prefix
@@ -43,10 +40,7 @@ def split_uri_2_path_filename(uri: str):
 
 def get_processor_location(processor_path: str):
     m = re.match(r"projects/(.+)/locations/(.+)/processors", processor_path)
-    if m and len(m.groups()) >= 2:
-        return m.group(2)
-
-    return None
+    return m.group(2) if m and len(m.groups()) >= 2 else None
 
 
 def is_date(string: str):

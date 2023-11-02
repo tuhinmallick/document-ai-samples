@@ -14,15 +14,12 @@
 
 """DocAI End-to-End Pipeline Demo Constant Definitions"""
 
+
 from general_utils import invert_dictionary_with_array
 from general_utils import read_yaml
 
 # Processors that Split & Classify
-CLASSIFIER_PROCESSOR_TYPES = set(
-    [
-        "LENDING_DOCUMENT_SPLIT_PROCESSOR",
-    ]
-)
+CLASSIFIER_PROCESSOR_TYPES = {"LENDING_DOCUMENT_SPLIT_PROCESSOR"}
 
 # Map Processor Type to Classifier Output
 PROCESSOR_SUPPORTED_DOCUMENT_TYPES = {

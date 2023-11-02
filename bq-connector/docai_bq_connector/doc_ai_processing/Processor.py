@@ -124,9 +124,8 @@ class Processor:
         results = client.process_document(request)
         logging.debug(f"HITL Output: {results.human_review_status}")
 
-        hitl_op = results.human_review_status.human_review_operation
         hitl_op_id = None
-        if hitl_op:
+        if hitl_op := results.human_review_status.human_review_operation:
             hitl_op_split = hitl_op.split("/")
             hitl_op_id = hitl_op_split.pop()
 
@@ -221,17 +220,13 @@ class Processor:
             hitl_gcs_output = output_config
             hitl_op_full_path = None
 
-        # Results are written to GCS. Use a regex to find
-        # output files
-        match = re.match(r"gs://([^/]+)/(.+)", hitl_gcs_output)
-        if match:
-            output_bucket = match.group(1)
-            prefix = match.group(2)
-        else:
+        if not (match := re.match(r"gs://([^/]+)/(.+)", hitl_gcs_output)):
             raise InvalidGcsUriError(
                 "The supplied async_output_folder_gcs_uri is not a properly structured GCS Path"
             )
 
+        output_bucket = match.group(1)
+        prefix = match.group(2)
         storage_client = storage.Client()
         bucket = storage_client.get_bucket(output_bucket)
         blob_list = list(bucket.list_blobs(prefix=prefix))

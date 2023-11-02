@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Initialize Document AI Processors and Config File"""
+
 from typing import Dict
 
 from consts import CONFIG
@@ -29,17 +30,15 @@ from google.api_core.exceptions import GoogleAPICallError
 PROCESSOR_NAME_PREFIX = "taxdemo2022-"
 PROCESSOR_CONFIG_FIELD = "docai_active_processors"
 
-TAX_DEMO_PROCESSORS = set(
-    [
-        "FORM_PARSER_PROCESSOR",
-        "LENDING_DOCUMENT_SPLIT_PROCESSOR",
-        "FORM_1099DIV_PROCESSOR",
-        "FORM_1099INT_PROCESSOR",
-        "FORM_1099MISC_PROCESSOR",
-        "FORM_1099NEC_PROCESSOR",
-        "FORM_W2_PROCESSOR",
-    ]
-)
+TAX_DEMO_PROCESSORS = {
+    "FORM_PARSER_PROCESSOR",
+    "LENDING_DOCUMENT_SPLIT_PROCESSOR",
+    "FORM_1099DIV_PROCESSOR",
+    "FORM_1099INT_PROCESSOR",
+    "FORM_1099MISC_PROCESSOR",
+    "FORM_1099NEC_PROCESSOR",
+    "FORM_W2_PROCESSOR",
+}
 
 # pylint: disable-next=line-too-long
 ACCESS_REQUEST_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc_6s8jsHLZWWE0aSX0bdmk24XDoPiE_oq5enDApLcp1VKJ-Q/viewform?gxids=7826"  # noqa: E501

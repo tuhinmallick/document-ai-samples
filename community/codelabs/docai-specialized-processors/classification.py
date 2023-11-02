@@ -73,10 +73,7 @@ for entity in document.entities:
     types.append(classification)
     confidence.append(f"{entity.confidence:.0%}")
 
-    # entity.page_ref contains the pages that match the classification
-    pages_list = []
-    for page_ref in entity.page_anchor.page_refs:
-        pages_list.append(page_ref.page)
+    pages_list = [page_ref.page for page_ref in entity.page_anchor.page_refs]
     pages.append(pages_list)
 
 # Create a Pandas Dataframe to print the values in tabular format.

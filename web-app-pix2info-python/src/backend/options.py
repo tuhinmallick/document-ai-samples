@@ -67,13 +67,7 @@ class Options(NamedTuple):
 
         format = ImageFormat(options.get("format", "png"))
         if format == ImageFormat.AUTO:
-            if options["animated"]:
-                # GIF is the most supported format for animations (esp. by blogs)
-                # Additionally, WebP animations take ~3x more time to generate (in Pillow)
-                format = ImageFormat.GIF
-            else:
-                # Best file size alternative
-                format = ImageFormat.WEBP
+            format = ImageFormat.GIF if options["animated"] else ImageFormat.WEBP
         options["format"] = format
 
         return cls(**options)

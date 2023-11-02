@@ -24,13 +24,11 @@ def get_project_number(project_id):
 
 
 def get_gcs_file(uri):
-    matches = re.match("gs://(.*?)/(.*)", uri)
-    if matches:
+    if matches := re.match("gs://(.*?)/(.*)", uri):
         bucket_name, object_name = matches.groups()
         bucket = storage_client.get_bucket(bucket_name)
         gcs_file = bucket.get_blob(object_name)
-        file_blob = gcs_file.download_as_bytes()
-        return file_blob
+        return gcs_file.download_as_bytes()
 
 
 url = "http://metadata.google.internal/computeMetadata/v1/project/project-id"
