@@ -91,9 +91,7 @@ def get_list():
     """Returns list of available processors"""
 
     processor_list = list(processor_id_by_processor_type.keys())
-    response = jsonify({"resultStatus": "SUCCESS", "processor_list": processor_list})
-
-    return response
+    return jsonify({"resultStatus": "SUCCESS", "processor_list": processor_list})
 
 
 if __name__ == "__main__":

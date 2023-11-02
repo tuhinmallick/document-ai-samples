@@ -340,7 +340,7 @@ def do_render_pass1(demo: Demo) -> BytesIO:
     format = demo.options.format
 
     params: dict[str, Any] = dict()
-    if 1 < demo.frame_count:
+    if demo.frame_count > 1:
         if format == ImageFormat.GIF:
             format = ImageFormat.PNG  # Optimize as GIF in pass 2
         image_sequence = FrameSequence(format, next_frames)
@@ -384,19 +384,18 @@ class FrameSequence:
         return self
 
     def __next__(self):
-        if self.double_iter:
-            # No need to iterate the first time (all frames have the same format)
-            self.double_iter = False
-            raise StopIteration()
-        else:
+        if not self.double_iter:
             return next(self.next_frames)
+        # No need to iterate the first time (all frames have the same format)
+        self.double_iter = False
+        raise StopIteration()
 
 
 def animation_durations(demo: Demo) -> list[int]:
     durations = [FRAME_DURATION_DEFAULT] * demo.frame_count
-    if 1 < demo.frame_count:
+    if demo.frame_count > 1:
         durations[0] = FRAME_DURATION_FIRST
-    if 2 < demo.frame_count:
+    if demo.frame_count > 2:
         durations[-1] = FRAME_DURATION_LAST
     return durations
 
@@ -435,9 +434,9 @@ def prepare_rendering(demo: Demo) -> bool:
     demo.rendering = False
     demo.frame_count = sum(1 for _ in render_full_frames(demo))
     demo.rendering = True
-    copy_frame = 1 < demo.frame_count and demo.options.format == ImageFormat.WEBP
+    copy_frame = demo.frame_count > 1 and demo.options.format == ImageFormat.WEBP
 
-    if demo.options.format == ImageFormat.GIF and 1 < demo.frame_count:
+    if demo.options.format == ImageFormat.GIF and demo.frame_count > 1:
         # Quantize base image to 8bpp
         method = Image.Quantize.MEDIANCUT.value  # Best with dithering
         dither = Image.Dither.FLOYDSTEINBERG  # Best for real-life pictures
@@ -697,8 +696,7 @@ def will_render_entity(
 def color_gen() -> Iterator[PilColor]:
     colors = (GOOGLE_BLUE, GOOGLE_RED, GOOGLE_YELLOW, GOOGLE_GREEN)
     while True:
-        for color in colors:
-            yield color
+        yield from colors
 
 
 def text_for_entity(demo: Demo, entity: Entity) -> tuple[str, bool]:
@@ -707,7 +705,7 @@ def text_for_entity(demo: Demo, entity: Entity) -> tuple[str, bool]:
     else:
         text, normalized = default_text_for_entity(entity)
     if ENTITY_TEXT_MAX_CHARS < len(text):
-        text = text[:ENTITY_TEXT_MAX_CHARS] + "…"
+        text = f"{text[:ENTITY_TEXT_MAX_CHARS]}…"
 
     return text, normalized
 

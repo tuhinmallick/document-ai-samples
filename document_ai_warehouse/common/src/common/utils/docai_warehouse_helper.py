@@ -35,8 +35,8 @@ def get_key_value_pairs(document_ai_output):
         get_key_values_dic(entity, document_entities)
 
     names: List[Tuple[str, str]] = []
-    for key in document_entities.keys():
-        for val in document_entities[key]:
+    for value in document_entities.values():
+        for val in value:
             key_name = val[0]
             key_value = val[1]
 
@@ -77,7 +77,7 @@ def extract_entities_as_properties(
                 properties.append(one_property)
             except Exception as e:
                 # Skip adding this property if the value does not fit to the type
-                print(str(e))
+                print(e)
 
     return properties
 

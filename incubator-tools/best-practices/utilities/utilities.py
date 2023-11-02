@@ -45,11 +45,10 @@ def file_names(gs_file_path: str) -> Tuple[List[str], Dict[str, str]]:
         )
     ]
 
-    for i in range(len(filenames)):
-        x = filenames[i].split("/")[-1]
-        if x:
+    for filename in filenames:
+        if x := filename.split("/")[-1]:
             file_names_list.append(x)
-            file_dict[x] = filenames[i]
+            file_dict[x] = filename
 
     return file_names_list, file_dict
 
@@ -113,14 +112,10 @@ def list_blobs(bucket_name: str) -> List[str]:
         list: A list containing the names of all files (blobs) present in the specified bucket.
     """
 
-    blob_list = []
     storage_client = storage.Client()
     blobs = storage_client.list_blobs(bucket_name)
 
-    for blob in blobs:
-        blob_list.append(blob.name)
-
-    return blob_list
+    return [blob.name for blob in blobs]
 
 
 def matching_files_two_buckets(
@@ -160,7 +155,7 @@ def matching_files_two_buckets(
                 non_matched_files_dict[i] = "No parsed output available"
 
     for i in matched_files_dict:
-        if i in non_matched_files_dict.keys():
+        if i in non_matched_files_dict:
             del non_matched_files_dict[i]
 
     print("matched_files_dict =", matched_files_dict)
@@ -188,9 +183,7 @@ def documentai_json_proto_downloader(
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(blob_name_with_prefix_path)
 
-    doc = documentai.Document.from_json(blob.download_as_bytes())
-
-    return doc
+    return documentai.Document.from_json(blob.download_as_bytes())
 
 
 def copy_blob(
@@ -289,11 +282,11 @@ def json_to_dataframe(data: documentai.Document) -> pd.DataFrame:
                     has_properties = True  # Mark that we found properties
                     try:
                         df = get_entity_metadata(df, subentity)
-                    except (AttributeError, Exception) as e:
+                    except Exception as e:
                         print(e)
                         continue
 
-            except (AttributeError, Exception) as e:
+            except Exception as e:
                 print(f"Exception encountered: {e}")
                 continue
 
@@ -301,12 +294,12 @@ def json_to_dataframe(data: documentai.Document) -> pd.DataFrame:
             if not has_properties:
                 try:
                     df = get_entity_metadata(df, entity)
-                except (AttributeError, Exception) as e:
+                except Exception as e:
                     print(f"Exception encountered: {e}")
                     continue
 
         return df
-    except (AttributeError, Exception) as e:
+    except Exception as e:
         print(f"Exception encountered: {e}")
         return df
 
@@ -351,9 +344,7 @@ def bbox_maker(bounding_poly: List[Dict[str, float]]) -> List[float]:
         x_list.append(i["x"])
         y_list.append(i["y"])
 
-    bbox = [min(x_list), min(y_list), max(x_list), max(y_list)]
-
-    return bbox
+    return [min(x_list), min(y_list), max(x_list), max(y_list)]
 
 
 def remove_row(df: pd.DataFrame, entity: Any) -> pd.DataFrame:
@@ -412,14 +403,16 @@ def find_match(
             iou = bb_intersection_over_union(bbox_file1, entity_file2["bbox"])
             index_iou_pairs.append((index, iou))
 
-    # Choose entity with highest IOU, IOU should be at least > 0.2
-    matched_index = None
-    for index_iou in sorted(index_iou_pairs, key=operator.itemgetter(1), reverse=True):
-        if index_iou[1] > 0.2:  # Threshold
-            matched_index = index_iou[0]
-            break
-
-    return matched_index
+    return next(
+        (
+            index_iou[0]
+            for index_iou in sorted(
+                index_iou_pairs, key=operator.itemgetter(1), reverse=True
+            )
+            if index_iou[1] > 0.2
+        ),
+        None,
+    )
 
 
 def bb_intersection_over_union(box1: Any, box2: List[float]) -> float:
@@ -459,10 +452,7 @@ def bb_intersection_over_union(box1: Any, box2: List[float]) -> float:
     box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
     box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
 
-    # Calculate the IOU
-    iou = inter_area / float(box1_area + box2_area - inter_area)
-
-    return iou
+    return inter_area / float(box1_area + box2_area - inter_area)
 
 
 def get_match_ratio(values: List[str]) -> float:
@@ -511,10 +501,11 @@ def compare_pre_hitl_and_post_hitl_output(
     # find entities which are present only once in both files
     # these entities will be matched directly
     common_entities = set(file1_entities).intersection(set(file2_entities))
-    exclude_entities = []
-    for entity in common_entities:
-        if file1_entities.count(entity) > 1 or file2_entities.count(entity) > 1:
-            exclude_entities.append(entity)
+    exclude_entities = [
+        entity
+        for entity in common_entities
+        if file1_entities.count(entity) > 1 or file2_entities.count(entity) > 1
+    ]
     for entity in exclude_entities:
         common_entities.remove(entity)
     df_compare = pd.DataFrame(
@@ -606,9 +597,9 @@ def compare_pre_hitl_and_post_hitl_output(
 
     # df_compare['Match'] = df_compare['Ground Truth Text'] == df_compare['Output Text']
     match_array = []
+    not_found_string = "Entity not found."
     for i in range(0, len(df_compare)):
         match_string = ""
-        not_found_string = "Entity not found."
         pre_output = df_compare.iloc[i]["Pre_HITL_Output"]
         post_output = df_compare.iloc[i]["Post_HITL_Output"]
 
@@ -616,13 +607,10 @@ def compare_pre_hitl_and_post_hitl_output(
             match_string = "TN"
         elif pre_output != not_found_string and post_output == not_found_string:
             match_string = "FN"
-        elif pre_output == not_found_string and post_output != not_found_string:
+        elif pre_output == not_found_string:
             match_string = "FP"
-        elif pre_output != not_found_string and post_output != not_found_string:
-            match_string = "TP" if pre_output == post_output else "FP"
         else:
-            match_string = "Something went Wrong."
-
+            match_string = "TP" if pre_output == post_output else "FP"
         match_array.append(match_string)
 
     df_compare["Match"] = match_array
@@ -752,7 +740,4 @@ def process_document_sample(
         name=name, raw_document=raw_document, skip_human_review=False
     )
 
-    # Recognizes text entities in the PDF document
-    result = client.process_document(request=request)
-
-    return result
+    return client.process_document(request=request)

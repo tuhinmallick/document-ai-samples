@@ -66,7 +66,7 @@ def parse_results(request):
             result_prefix,
         )
         # add pageImageNames from shards to response
-        response["pageImageNames"] = response["pageImageNames"] + page_image_names
+        response["pageImageNames"] += page_image_names
         # upload unsharded document
         storage_client = storage.Client()
         process_result_bucket = storage_client.get_bucket(result_bucket_name)
@@ -154,8 +154,8 @@ def check_entity_confidence(entities, entity_labels):
 
 
 def apply_text_offset(json_input, text_offset):
-    lookup_key = "textSegments"
     if isinstance(json_input, dict):
+        lookup_key = "textSegments"
         for k, v in json_input.items():
             if k == lookup_key:
                 for text_segment in v:
@@ -231,13 +231,10 @@ def merge_sharded_results(
                 del page["image"]
         print("Applying page offset to all pageRefs")
         for entity in document.get("entities", []):
-            page_anchor = entity.get("pageAnchor")
-            if page_anchor:
-                page_refs = page_anchor.get("pageRefs")
-                if page_refs:
+            if page_anchor := entity.get("pageAnchor"):
+                if page_refs := page_anchor.get("pageRefs"):
                     for page_ref in page_refs:
-                        page = page_ref.get("page")
-                        if page:
+                        if page := page_ref.get("page"):
                             page_ref["page"] = int(page) + page_offset
                         else:
                             page_ref["page"] = page_offset
@@ -245,16 +242,16 @@ def merge_sharded_results(
         apply_text_offset(document, text_offset)
         print("Merging document into merged_document")
         for key in document.keys():
-            if isinstance(document[key], list):
-                if key in merged_document:
-                    merged_document[key] = merged_document[key] + document[key]
-                else:
-                    merged_document[key] = document[key]
+            if isinstance(document[key], list) and key in merged_document:
+                merged_document[key] = merged_document[key] + document[key]
+            elif (
+                isinstance(document[key], list)
+                or key != "text"
+                and key not in merged_document
+            ):
+                merged_document[key] = document[key]
             elif key == "text":
                 text[shard_index] = document[key]
-            else:
-                if key not in merged_document:
-                    merged_document[key] = document[key]
         del document
         gc.collect()
         print("Memory: ", psutil.virtual_memory())
@@ -307,7 +304,7 @@ def render_pdf_to_image(
     # render images using pypdfium2
     pdf = pdfium.PdfDocument(input_file)
     n_pages = len(pdf)
-    page_indices = [i for i in range(n_pages)]
+    page_indices = list(range(n_pages))
     renderer = pdf.render(
         pdfium.PdfBitmap.to_pil,
         page_indices=page_indices,

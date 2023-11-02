@@ -30,5 +30,4 @@ def get_pdf_page_cnt(pdf_doc: bytes):
     """
     pdf_file = BytesIO(pdf_doc)
     reader = PdfReader(pdf_file)
-    num_pages = len(reader.pages)
-    return num_pages
+    return len(reader.pages)

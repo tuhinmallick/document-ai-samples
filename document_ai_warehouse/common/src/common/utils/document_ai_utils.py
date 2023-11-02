@@ -86,15 +86,14 @@ class DocumentaiUtils:
                     entities[key] = []
                 entities[key].append(value)
 
-            for key in entities:
-                values = entities[key]
+            for key, values in entities.items():
                 N = len(values)
 
                 for i in range(N):
                     if i == 0:
                         fields[key] = values[i]
                     else:
-                        fields[key + "_" + str(i + 1)] = values[i]
+                        fields[f"{key}_{str(i + 1)}"] = values[i]
 
         return fields
 
@@ -105,7 +104,7 @@ class DocumentaiUtils:
         gcs_output_bucket: str,
         timeout=600,
     ):
-        if len(input_uris) == 0:
+        if not input_uris:
             return []
         client = self.get_docai_client()
         parent = self.get_parent()
@@ -199,7 +198,7 @@ class DocumentaiUtils:
             )
             # Get List of Document Objects from the Output Bucket
             output_blobs = storage_client.list_blobs(
-                output_bucket, prefix=output_prefix + "/"
+                output_bucket, prefix=f"{output_prefix}/"
             )
 
             # Document AI may output multiple JSON files per source file
@@ -218,10 +217,7 @@ class DocumentaiUtils:
                     documents[input_gcs_source] = []
                 documents[input_gcs_source].append(f"gs://{output_bucket}/{blob.name}")
 
-        result = {}
-        for doc in documents:
-            result[doc] = merge_json_files(documents[doc])
-
+        result = {doc: merge_json_files(documents[doc]) for doc in documents}
         return result
 
 
@@ -250,8 +246,7 @@ def merge_json_files(files):
 
     doc_json = json.dumps(result)
 
-    document = documentai.Document.from_json(doc_json, ignore_unknown_fields=True)
-    return document
+    return documentai.Document.from_json(doc_json, ignore_unknown_fields=True)
 
 
 # Handling Nested labels for CDE processor
@@ -277,25 +272,17 @@ def get_key_values_dic(
         else:
             normalized_value = normalized_value.get("text")
 
-    if parent_key is not None and parent_key in document_entities.keys():
+    if parent_key is not None and parent_key in document_entities:
         key = parent_key
-        new_entity_value = (
-            entity_key,
-            normalized_value
-            if normalized_value is not None
-            else entity.get("mentionText"),
-            confidence,
-        )
     else:
         key = entity_key
-        new_entity_value = (
-            entity_key,
-            normalized_value
-            if normalized_value is not None
-            else entity.get("mentionText"),
-            confidence,
-        )
-
+    new_entity_value = (
+        entity_key,
+        normalized_value
+        if normalized_value is not None
+        else entity.get("mentionText"),
+        confidence,
+    )
     existing_entity = document_entities.get(key)
     if not existing_entity:
         document_entities[key] = []
@@ -305,6 +292,5 @@ def get_key_values_dic(
         # Sub-labels (only down one level)
         for prop in entity.get("properties", []):
             get_key_values_dic(prop, document_entities, entity_key)
-    else:
-        if existing_entity:
-            existing_entity.append(new_entity_value)
+    elif existing_entity:
+        existing_entity.append(new_entity_value)

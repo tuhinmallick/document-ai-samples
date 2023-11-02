@@ -13,15 +13,14 @@ def get_request(request):
     project_id = urllib.request.urlopen(req).read().decode()
 
     x = random.randint(1, 100)
-    processor_name = "rf_expense_" + str(x)
+    processor_name = f"rf_expense_{x}"
     location = "us"
     processor_display_name = processor_name
     processor_type = "EXPENSE_PROCESSOR"
     project_number = get_project_number(project_id)
-    processor_id = create_processor_sample(
+    return create_processor_sample(
         project_number, location, processor_display_name, processor_type
     )
-    return processor_id
 
 
 def get_project_number(project_id):

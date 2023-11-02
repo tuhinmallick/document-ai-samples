@@ -165,11 +165,7 @@ def split_pdf(entities: Sequence[Document.Entity], file_path: str, output_dir: s
             end = int(entity.page_anchor.page_refs[-1].page)
             subdoc_type = entity.type_ or "subdoc"
 
-            if start == end:
-                page_range = f"pg{start + 1}"
-            else:
-                page_range = f"pg{start + 1}-{end + 1}"
-
+            page_range = f"pg{start + 1}" if start == end else f"pg{start + 1}-{end + 1}"
             output_filename = f"{page_range}_{subdoc_type}"
 
             print(f"Creating subdocument {index + 1}: {output_filename}")

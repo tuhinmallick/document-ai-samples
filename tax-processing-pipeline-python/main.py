@@ -15,6 +15,7 @@
 # type: ignore
 """Flask Web Server"""
 
+
 import os
 from tempfile import TemporaryDirectory
 from typing import List, Tuple
@@ -38,7 +39,7 @@ FIRESTORE_COLLECTION = f"{FIRESTORE_COLLECTION_PREFIX}-{SESSION_ID}"
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "/tmp"
-ALLOWED_MIMETYPES = set(["application/pdf", "image/tiff", "image/jpeg"])
+ALLOWED_MIMETYPES = {"application/pdf", "image/tiff", "image/jpeg"}
 
 
 @app.route("/", methods=["GET"])
@@ -88,10 +89,12 @@ def view_extracted_data() -> str:
     """
     Display Raw extracted data from Documents
     """
-    extracted_data = read_collection(FIRESTORE_PROJECT_ID, FIRESTORE_COLLECTION)
-    if not extracted_data:
+    if extracted_data := read_collection(
+        FIRESTORE_PROJECT_ID, FIRESTORE_COLLECTION
+    ):
+        return render_template("index.html", extracted_data=extracted_data)
+    else:
         return render_template("index.html", message_error="No data to display")
-    return render_template("index.html", extracted_data=extracted_data)
 
 
 @app.route("/view_tax_bill", methods=["GET"])
@@ -100,11 +103,10 @@ def view_tax_bill() -> str:
     Calculate Tax Return with Document Information from Firestore
     """
     extracted_data = read_collection(FIRESTORE_PROJECT_ID, FIRESTORE_COLLECTION)
-    tax_data = calculate_tax_values(extracted_data)
-
-    if not tax_data:
+    if tax_data := calculate_tax_values(extracted_data):
+        return render_template("index.html", tax_data=tax_data)
+    else:
         return render_template("index.html", message_error="No data to display")
-    return render_template("index.html", tax_data=tax_data)
 
 
 @app.route("/delete_data", methods=["GET"])

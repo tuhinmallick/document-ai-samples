@@ -63,9 +63,7 @@ def process_document(process_document_request):
 
     document = result.document
 
-    json_result = ProcessResponse.to_json(result)
-
-    return json_result
+    return ProcessResponse.to_json(result)
 
 
 # TODO: Store the file that was sent in the request in GCS # pylint: disable=W0511

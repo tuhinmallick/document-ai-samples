@@ -23,9 +23,7 @@ def write_to_bq(dataset_name, table_name, geocode_response_dict):
     """
     dataset_ref = bq_client.dataset(dataset_name)
     table_ref = dataset_ref.table(table_name)
-    row_to_insert = []
-    row_to_insert.append(geocode_response_dict)
-
+    row_to_insert = [geocode_response_dict]
     json_data = json.dumps(row_to_insert, sort_keys=False)
     json_object = json.loads(json_data)
 
@@ -53,8 +51,7 @@ def process_address(event, context):
     pubsub_message = base64.b64decode(event["data"]).decode("utf-8")
     message_dict = json.loads(pubsub_message)
     query_address = message_dict.get("entity_text")
-    geocode_dict = {}
-    geocode_dict["input_file_name"] = message_dict.get("input_file_name")
+    geocode_dict = {"input_file_name": message_dict.get("input_file_name")}
     geocode_dict["entity_type"] = message_dict.get("entity_type")
     geocode_dict["entity_text"] = query_address
     geocode_response_dict = extract_geocode_info(query_address)

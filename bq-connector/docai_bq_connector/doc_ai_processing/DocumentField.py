@@ -56,9 +56,7 @@ class DocumentField:
         if self.children and len(self.children) > 0:
             _children = []
             for child_row in self.children:
-                _fields = []
-                for child_field in child_row.fields:
-                    _fields.append(child_field.to_dictionary())
+                _fields = [child_field.to_dictionary() for child_field in child_row.fields]
                 _children.append(_fields)
             _dictionary["children"] = _children
         return _dictionary

@@ -161,10 +161,14 @@ def find_processor_id_of_type(
     client: DocumentProcessorServiceClient, parent: str, tartget_processor_type: str
 ) -> Optional[str]:
     """Searches for a processor ID for a given processor type."""
-    for processor in client.list_processors(parent=parent).processors:
-        if processor.type_ == tartget_processor_type:
-            return processor.name.split("/")[-1]
-    return None
+    return next(
+        (
+            processor.name.split("/")[-1]
+            for processor in client.list_processors(parent=parent).processors
+            if processor.type_ == tartget_processor_type
+        ),
+        None,
+    )
 
 
 if __name__ == "__main__":

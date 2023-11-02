@@ -275,7 +275,7 @@ def proces_documents(
     created_schemas: Set[str] = set()
     document_id_list: List[str] = []
 
-    if len(files_to_parse) == 0:
+    if not files_to_parse:
         return created_schemas, document_id_list
 
     docai_output_list = docai_utils.batch_extraction(
@@ -294,19 +294,18 @@ def proces_documents(
 
             if schema_id:
                 document_schema_id = schema_id
-            else:
-                if schema_name in document_schemas:
-                    document_schema_id = document_schemas[schema_name]
-                    schema = dw_utils.get_document_schema(document_schema_id)
-                    if (
-                        schema
-                        and len(keys) != 0
-                        and len(schema.property_definitions) == 0
-                        and options
-                    ):
-                        create_new_schema = True
-                else:
+            elif schema_name in document_schemas:
+                document_schema_id = document_schemas[schema_name]
+                schema = dw_utils.get_document_schema(document_schema_id)
+                if (
+                    schema
+                    and len(keys) != 0
+                    and len(schema.property_definitions) == 0
+                    and options
+                ):
                     create_new_schema = True
+            else:
+                create_new_schema = True
 
             if create_new_schema:
                 schema_path = create_mapping_schema(schema_name, keys, options)
@@ -323,15 +322,14 @@ def proces_documents(
 
             if document_schema_id:
                 try:
-                    document_id = upload_document_gcs(
+                    if document_id := upload_document_gcs(
                         f_uri,
                         document_schema_id,
                         parent_id,
                         reference_id,
                         document_ai_output,
                         metadata_properties,
-                    )
-                    if document_id:
+                    ):
                         document_id_list.append(document_id)
                 except Exception as ex:
                     Logger.error(f"Failed to upload {f_uri} - {ex}")
@@ -355,7 +353,7 @@ def prepare_file_structure(
 
     bucket_name, prefix = helper.split_uri_2_bucket_prefix(dir_uri)
     if not prefix.endswith(".pdf") and prefix != "":
-        prefix = prefix + "/"
+        prefix = f"{prefix}/"
 
     blobs = list(storage_client.list_blobs(bucket_name, prefix=prefix))
     if folder_name is None:
@@ -367,10 +365,7 @@ def prepare_file_structure(
 
         try:
             if filename.endswith(".pdf"):
-                if flatten:
-                    dirs = [filename.replace("/", "__")]
-                else:
-                    dirs = filename.split("/")
+                dirs = [filename.replace("/", "__")] if flatten else filename.split("/")
                 if " " in dirs[:-1]:
                     Logger.warning(
                         f"Skipping {filename} since name contains space, currently this is not supported."
@@ -415,16 +410,13 @@ def prepare_file_structure(
 
 
 def get_type(value: str) -> str:
-    if type(value) == bool or str(value) == "":
+    if type(value) == bool or not value:
         return "text_type_options"  # bool Not Supported
     if is_date(value):
         return "date_time_type_options"
     if is_valid_int(value):
         return "integer_type_options"
-    if is_valid_float(value):
-        return "float_type_options"
-
-    return "text_type_options"
+    return "float_type_options" if is_valid_float(value) else "text_type_options"
 
 
 def is_valid_float(string: str) -> bool:
@@ -436,7 +428,7 @@ def is_valid_float(string: str) -> bool:
 
 
 def is_valid_bool(string: str) -> bool:
-    return string.lower() in ["true", "false"]
+    return string.lower() in {"true", "false"}
 
 
 def is_valid_int(string: str) -> bool:
@@ -464,8 +456,7 @@ def create_mapping_schema(display_name: str, names, options: bool = True) -> str
                 "is_required": False,
             }
 
-            v_type = get_type(value)
-            if v_type:
+            if v_type := get_type(value):
                 definition[v_type] = {}
             properties.append(definition)
 
@@ -557,8 +548,7 @@ def create_folder(
     reference_path = f"referenceId/{reference_id}"
     try:
         document = dw_utils.get_document(reference_path, CALLER_USER)
-        folder_id = document.name.split("/")[-1]
-        return folder_id
+        return document.name.split("/")[-1]
     except NotFound:
         Logger.info(
             f" -------> Creating sub-folder [{display_name}] with reference_id=[{reference_id}]"
@@ -570,8 +560,7 @@ def create_folder(
             reference_id=reference_id,
         )
         if create_folder_response is not None:
-            folder_id = create_folder_response.document.name.split("/")[-1]
-            return folder_id
+            return create_folder_response.document.name.split("/")[-1]
     return None
 
 
